@@ -1,0 +1,10 @@
+---
+title: "p8105_hw3_imo2121"
+author: "Ian O'Keeffe"
+date: "2026-10-14"
+output: github_document
+---
+
+```{r setup, message=FALSE, echo=FALSE}
+library(tidyverse)
+```
