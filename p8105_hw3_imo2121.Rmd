@@ -4,7 +4,7 @@ author: "Ian O'Keeffe"
 date: "2026-10-14"
 output: github_document
 ---
-
+## Problem 1
 ```{r setup, message=FALSE, echo=FALSE}
 library(p8105.datasets)
 library(patchwork)
@@ -108,8 +108,34 @@ ggp_full_tmp + ggp_snowfall
 ```
 We made two density plots. The left compares minimum and maximum temperature by station and month, while the right shows how often stations recorded days with snowfalls between 0 and 100 millimeters by year.
 
+## Problem 2
 ```{r}
+accel_df = read.csv("./files/nhanes_accel.csv") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    min1:min1440,
+    names_to = "minute", 
+    values_to = "mims"
+    )
+covar_df = read.csv("./files/nhanes_covar.csv", skip = 4) %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    sex = as.factor(ifelse(sex == 1, "Male", "Female"))
+  )
 
+mims_df = accel_df %>% 
+  left_join(covar_df, 'seqn')
+
+head(mims_df, 5)
 ```
 
+We load and tidy the datasets, pivoting the minutes into their own rows for the acceleration csv and changing from codes to male and female. We then left join them on the 'seqn' column. 
+
+```{r}
+mims_df = mims_df %>% 
+  filter(age >= 21) %>%
+  mutate(
+    education = as.factor(education)
+  )
+```
 
