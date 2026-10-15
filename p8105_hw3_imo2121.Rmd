@@ -18,11 +18,9 @@ noaa_df = ny_noaa %>%
   janitor::clean_names()
 
 dim(noaa_df)
-view(noaa_df)
 
 na_count <- noaa_df %>%
   summarise(across(everything(), ~ mean(is.na(.)) * 100 ))
-na_count
 ```
 
 This dataframe contains `r nrow(noaa_df)` rows and `r ncol(noaa_df)` columns. The key variables include date, prcp (the amount of precipitation that day, in tenths of mm) snow (in mm), snwd (depth of the snow that day, in mm) tmax and tmin (the maximum and minimum temperatures that day in tenths of degrees C). Missing data is an issue here, as every weather station does not collect every value. Accordingly, `r pull(na_count, snow)`% of the snow data, `r pull(na_count, snwd)`% of snow depth, and `r pull(na_count, tmin)`% of both temp min and temp max data are missing.
@@ -109,6 +107,7 @@ ggp_snowfall = noaa_df %>%
 ggp_full_tmp + ggp_snowfall
 ```
 We made two density plots. The left compares minimum and maximum temperature by station and month, while the right shows how often stations recorded days with snowfalls between 0 and 100 millimeters by year.
+
 ```{r}
 
 ```
