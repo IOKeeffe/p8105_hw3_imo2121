@@ -6,5 +6,111 @@ output: github_document
 ---
 
 ```{r setup, message=FALSE, echo=FALSE}
+library(p8105.datasets)
+library(patchwork)
 library(tidyverse)
+options(digits = 2)
+data("ny_noaa")
 ```
+
+```{r}
+noaa_df = ny_noaa %>% 
+  janitor::clean_names()
+
+dim(noaa_df)
+view(noaa_df)
+
+na_count <- noaa_df %>%
+  summarise(across(everything(), ~ mean(is.na(.)) * 100 ))
+na_count
+```
+
+This dataframe contains `r nrow(noaa_df)` rows and `r ncol(noaa_df)` columns. The key variables include date, prcp (the amount of precipitation that day, in tenths of mm) snow (in mm), snwd (depth of the snow that day, in mm) tmax and tmin (the maximum and minimum temperatures that day in tenths of degrees C). Missing data is an issue here, as every weather station does not collect every value. Accordingly, `r pull(na_count, snow)`% of the snow data, `r pull(na_count, snwd)`% of snow depth, and `r pull(na_count, tmin)`% of both temp min and temp max data are missing.
+
+
+```{r}
+noaa_df = noaa_df %>% 
+  mutate(
+    day = lubridate::day(date),
+    month = lubridate::month(date),
+    year = lubridate::year(date),
+    snow = ifelse(
+      snow < 0, NA, snow
+    ),
+    prcp = prcp / 10,
+    tmin = as.numeric(tmin) / 10,
+    tmax = as.numeric(tmax) / 10
+  )
+
+noaa_df %>% 
+  count(snow, name = "n_obs") %>% 
+  arrange(desc(n_obs))
+
+```
+We add day, month, and year columns. Snow values less than 0 were changed to be NAs. We then adjust the prcp, tmax, and tmin to be full mm and degrees C, respectively. The majority of counts for snowfall were 0, since it does not snow in most places on most days.
+
+```{r}
+ggp_monthly_temp = noaa_df %>%
+  filter(
+    month %in% c(1, 7)
+  ) %>% 
+  mutate(
+    month = ifelse(
+      month == 1, "January", "July"
+    )
+  ) %>%
+  group_by(id, month, year) %>%
+  summarize(
+    avg_max = mean(tmax)
+  )  %>%
+  ggplot(aes(x = year, y = avg_max)) +
+  geom_point(size = 2) +
+  facet_wrap(~ month, ncol = 2) +
+  labs(
+    title = "Average Temperature by Station and Month",
+    x = "Year",
+    y = "Average Monthly Temperature (C)"
+  )
+  
+ggp_monthly_temp
+```
+The plots of average temperatures in January and July show relatively consistent temperatures, with a few outliers (e.g. one very cold day in July in the late 1980s).
+
+
+```{r}
+ggp_full_tmp = noaa_df %>%
+  pivot_longer(
+    tmax:tmin,
+    names_to = "observation", 
+    values_to = "temp") %>%  
+  ggplot(aes(x = temp, fill = observation)) +
+  geom_density(alpha = .5) +
+  labs(
+    title = "Average Temperature by Station and Month",
+    x = "Temperature (C)",
+    y = "Density"
+  )
+
+ggp_snowfall = noaa_df %>% 
+  filter(
+    snow > 0 & snow < 100
+  ) %>% 
+  count(year, name = "snow_count") %>% 
+  ggplot(aes(x = year, y=snow_count)) +
+  geom_line() +
+  labs(
+    title = "Snowfall Amounts",
+    x = "# of Snowfalls between 0 and 100mm",
+    y = "Year"
+  ) +
+  theme(legend.position="none")
+  
+
+ggp_full_tmp + ggp_snowfall
+```
+We made two density plots. The left compares minimum and maximum temperature by station and month, while the right shows how often stations recorded days with snowfalls between 0 and 100 millimeters by year.
+```{r}
+
+```
+
+
