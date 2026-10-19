@@ -328,3 +328,84 @@ kable(
 )
 ```
 
+```{r}
+median_duration <- citi_df %>%
+  mutate(
+    weekdays = factor(
+      weekdays,
+      levels = c("Monday", "Tuesday", "Wednesday",
+                 "Thursday", "Friday", "Saturday", "Sunday")
+    )
+  ) %>%
+  filter(!is.na(duration), duration >= 0,
+         !is.na(weekdays)) %>%
+  group_by(year, month, weekdays) %>%
+  summarise(
+    median_duration = median(duration),
+    .groups = "drop"
+  )
+
+ggplot(median_duration,
+       aes(x = weekdays,
+           y = median_duration,
+           color = year,
+           group = year)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ month) +
+  scale_x_discrete(
+    labels = c("Mon", "Tue", "Wed", "Thu",
+               "Fri", "Sat", "Sun")
+  ) +
+  labs(
+    title = "Median Citi Bike Ride Duration",
+    subtitle = "Comparison by Weekday, Month, and Year",
+    x = "Day of Week",
+    y = "Median Ride Duration",
+    color = "Year"
+  ) +
+  theme_minimal()
+```
+
+Generally speaking, people take longer rides on the weekend (besides Sundays in January 2024). People took longer rides in 2020 than in 2024, and July also has longer rides than January. 
+
+```{r}
+
+citi_2024 <- citi_df %>%
+  filter(
+    year == "2024",
+    !is.na(duration),
+    duration > 0,
+    !is.na(rideable_type),
+    !is.na(member_casual)
+  )
+
+ggplot(citi_2024,
+       aes(x = member_casual,
+           y = duration,
+           fill = rideable_type)) +
+  geom_boxplot(
+    outlier.shape = NA,
+    alpha = 0.75
+  ) +
+  facet_wrap(~ month) +
+  coord_cartesian(
+    ylim = c(0, quantile(citi_2024$duration, 0.95))
+  ) +
+  scale_fill_discrete(
+    labels = c(
+      "classic_bike" = "Classic Bike",
+      "electric_bike" = "Electric Bike"
+    )
+  ) +
+  labs(
+    title = "Citi Bike Ride Duration Distributions in 2024",
+    subtitle = "Comparison by Month, Membership, and Bike Type",
+    x = "Membership Status",
+    y = "Ride Duration",
+    fill = "Bike Type"
+  ) +
+  theme_minimal()
+```
+Casual (non-member) riders take longer riddes on classic bikes than on ebikes, while the opposite is true for members. Members have shorter rides than casual riders, perhaps indicating they aren't taking joyrides. 
+
