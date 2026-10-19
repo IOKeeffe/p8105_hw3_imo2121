@@ -289,7 +289,42 @@ head(citi_df)
 We import the 4 csv files, add columns for year and month, then bind them into one dataframe. We turn month, membership, and year into factors. We end up with a dataframe of `r nrow(citi_df)` rows and `rncol(citi)` columns. The rows indicate a single rental of a bike, and the columns are ride id, rideable type (classic or ebike), day of the week, ride duration, the starting and ending station, membership of the rider, year, and month.
 
 ```{r}
+ride_counts <- citi_df %>%
+  count(year, month, member_casual) %>%
+  pivot_wider(
+    names_from = member_casual,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(Total = Casual + Member) %>%
+  arrange(year, month)
 
+kable(
+  ride_counts,
+  caption = "Total Citi Bike Rides by Year, Month, and Membership",
+  col.names = c("Year", "Month", "Casual Riders",
+                "Members", "Total Rides"),
+  format.args = list(big.mark = ",")
+)
 ```
 
+There are more rides in July each year than in January. Ridership has increased between 2020 and 2024 in both January and July. Most rides are by citibike members. Members make up a much larger proportion of total rides in January of both years than they do in July.
+
+```{r}
+top_stations <- jul_2024_citi_df %>%
+  filter(!is.na(start_station_name),
+         start_station_name != "") %>%
+  count(start_station_name, sort = TRUE) %>%
+  slice_head(n = 5) %>%
+  rename(
+    "Starting Station" = start_station_name,
+    "Number of Rides" = n
+  )
+
+kable(
+  top_stations,
+  caption = "Five Most Popular Citi Bike Starting Stations, July 2024",
+  format.args = list(big.mark = ",")
+)
+```
 
