@@ -19,10 +19,8 @@ data("ny_noaa")
 noaa_df = ny_noaa %>% 
   janitor::clean_names()
 
-dim(noaa_df)
-
 na_count <- noaa_df %>%
-  summarise(across(everything(), ~ mean(is.na(.)) * 100 ))
+  summarize(across(everything(), ~ mean(is.na(.)) * 100 ))
 ```
 
 This dataframe contains `r nrow(noaa_df)` rows and `r ncol(noaa_df)` columns. The key variables include date, prcp (the amount of precipitation that day, in tenths of mm) snow (in mm), snwd (depth of the snow that day, in mm) tmax and tmin (the maximum and minimum temperatures that day in tenths of degrees C). Missing data is an issue here, as every weather station does not collect every value. Accordingly, `r pull(na_count, snow)`% of the snow data, `r pull(na_count, snwd)`% of snow depth, and `r pull(na_count, tmin)`% of both temp min and temp max data are missing.
@@ -46,6 +44,7 @@ noaa_df %>%
   count(snow, name = "n_obs") %>% 
   arrange(desc(n_obs))
 
+head(noaa_df)
 ```
 We add day, month, and year columns. Snow values less than 0 were changed to be NAs. We then adjust the prcp, tmax, and tmin to be full mm and degrees C, respectively. The majority of counts for snowfall were 0, since it does not snow in most places on most days.
 
@@ -75,7 +74,6 @@ ggp_monthly_temp = noaa_df %>%
 ggp_monthly_temp
 ```
 The plots of average temperatures in January and July show relatively consistent temperatures, with a few outliers (e.g. one very cold day in July in the late 1980s).
-
 
 ```{r}
 ggp_full_tmp = noaa_df %>%
@@ -108,6 +106,7 @@ ggp_snowfall = noaa_df %>%
 
 ggp_full_tmp + ggp_snowfall
 ```
+
 We made two density plots. The left compares minimum and maximum temperature by station and month, while the right shows how often stations recorded days with snowfalls between 0 and 100 millimeters by year.
 
 ## Problem 2
@@ -123,7 +122,7 @@ covar_df = read.csv("./files/nhanes_covar.csv", skip = 4) %>%
   janitor::clean_names() %>% 
   mutate(
     sex = as.factor(ifelse(sex == 1, "Male", "Female")), 
-    education = as.factor(case_match(
+    education = as.factor(recode_values(
       education,
         1 ~ "Less than high school",
         2 ~ "High school",
@@ -134,7 +133,7 @@ covar_df = read.csv("./files/nhanes_covar.csv", skip = 4) %>%
 mims_df = accel_df %>% 
   left_join(covar_df, 'seqn')
 
-head(mims_df, 5)
+head(mims_df)
 ```
 
 We load and tidy the datasets, pivoting the minutes into their own rows for the acceleration csv and changing from codes to male and female. We then left join them on the 'seqn' column. 
@@ -151,6 +150,7 @@ mims_df = mims_df %>%
   )
 head(mims_df)
 ```
+
 Education and minute are changed to factors, and rows for people under 21 years old are removed. We also remove any participants with na values.
 
 ```{r}
@@ -198,7 +198,7 @@ The people with more than a high school education are generally younger than the
 ```{r}
 activity_totals <- mims_df %>%
   group_by(seqn, sex, age, education) %>%
-  summarise(
+  summarize(
     total_activity = sum(mims),
     .groups = "drop"
   )
@@ -216,12 +216,13 @@ ggplot(activity_totals,
   ) +
   theme_minimal()
 ```
+
 As age increases, total activity decreases across all education levels and sexes. Women tended to do more activity than men for groups with at least a high school education, while the opposite was generally true for people with less than a high school education. 
 
 ```{r}
 activity_by_minute <- mims_df %>%
   group_by(education, sex, minute) %>%
-  summarise(
+  summarize(
     mean_mims = mean(mims),
     .groups = "drop"
   )
@@ -255,11 +256,12 @@ ggplot(activity_by_minute,
   theme_minimal()
 
 ```
+
 The plots of 24 hour activity show low activity in the early morning, with generally sustained energy throughout the middle of the day and into the night. 
 
 ## Problem 3
 
-```{r}
+```{r message=FALSE}
 jan_2020_citi_df <- read.csv("./files/Jan 2020 Citi.csv") %>%   
   janitor::clean_names()
 jan_2024_citi_df <- read_csv("./files/Jan 2024 Citi.csv") %>%   
@@ -282,10 +284,10 @@ citi_df <- bind_rows(
                            labels = c("Casual", "Member")),
     year = factor(year)
   )
-nrow()
-dim(citi_df)
+
 head(citi_df)
 ```
+
 We import the 4 csv files, add columns for year and month, then bind them into one dataframe. We turn month, membership, and year into factors. We end up with a dataframe of `r nrow(citi_df)` rows and `rncol(citi)` columns. The rows indicate a single rental of a bike, and the columns are ride id, rideable type (classic or ebike), day of the week, ride duration, the starting and ending station, membership of the rider, year, and month.
 
 ```{r}
@@ -340,7 +342,7 @@ median_duration <- citi_df %>%
   filter(!is.na(duration), duration >= 0,
          !is.na(weekdays)) %>%
   group_by(year, month, weekdays) %>%
-  summarise(
+  summarize(
     median_duration = median(duration),
     .groups = "drop"
   )
@@ -407,5 +409,6 @@ ggplot(citi_2024,
   ) +
   theme_minimal()
 ```
+
 Casual (non-member) riders take longer riddes on classic bikes than on ebikes, while the opposite is true for members. Members have shorter rides than casual riders, perhaps indicating they aren't taking joyrides. 
 
