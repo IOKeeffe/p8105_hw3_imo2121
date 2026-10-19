@@ -256,3 +256,40 @@ ggplot(activity_by_minute,
 
 ```
 The plots of 24 hour activity show low activity in the early morning, with generally sustained energy throughout the middle of the day and into the night. 
+
+## Problem 3
+
+```{r}
+jan_2020_citi_df <- read.csv("./files/Jan 2020 Citi.csv") %>%   
+  janitor::clean_names()
+jan_2024_citi_df <- read_csv("./files/Jan 2024 Citi.csv") %>%   
+  janitor::clean_names()
+jul_2020_citi_df <- read_csv("./files/July 2020 Citi.csv") %>%   
+  janitor::clean_names()
+jul_2024_citi_df <- read_csv("./files/July 2024 Citi.csv") %>%   
+  janitor::clean_names()
+
+citi_df <- bind_rows(
+  jan_2020_citi_df %>% mutate(year = 2020, month = "January"),
+  jan_2024_citi_df %>% mutate(year = 2024, month = "January"),
+  jul_2020_citi_df %>% mutate(year = 2020, month = "July"),
+  jul_2024_citi_df %>% mutate(year = 2024, month = "July")
+) %>%
+  mutate(
+    month = factor(month, levels = c("January", "July")),
+    member_casual = factor(member_casual,
+                           levels = c("casual", "member"),
+                           labels = c("Casual", "Member")),
+    year = factor(year)
+  )
+nrow()
+dim(citi_df)
+head(citi_df)
+```
+We import the 4 csv files, add columns for year and month, then bind them into one dataframe. We turn month, membership, and year into factors. We end up with a dataframe of `r nrow(citi_df)` rows and `rncol(citi)` columns. The rows indicate a single rental of a bike, and the columns are ride id, rideable type (classic or ebike), day of the week, ride duration, the starting and ending station, membership of the rider, year, and month.
+
+```{r}
+
+```
+
+
